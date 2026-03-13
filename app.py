@@ -65,13 +65,12 @@ with st.form("enquete_form"):
 
 if submit:
     try:
-        # L'URL de votre fichier
-        url = "https://docs.google.com/spreadsheets/d/1ia4XmRHSpwWabBNsGis8zyiBX2QvcVrka9Y-yCuIXiw/edit"
+        # On définit l'URL ici, c'est plus sûr
+        url_fiche = "https://docs.google.com/spreadsheets/d/1ia4XmRHSpwWabBNsGis8zyiBX2QvcVrka9Y-yCuIXiw/edit"
         
-        # 1. Lecture (on précise l'URL ici)
-        existing_data = conn.read(spreadsheet=url)
+        # Lecture : on passe l'URL à la fonction read
+        existing_data = conn.read(spreadsheet=url_fiche)
         
-        # 2. Création de la nouvelle ligne
         new_row = pd.DataFrame([{
             "Date": str(date_coll),
             "Enqueteur": enqueteur,
@@ -85,14 +84,20 @@ if submit:
             "Scolarisation": scolarisation
         }])
         
-        # 3. Fusion et Mise à jour (on précise l'URL ici aussi)
         updated_df = pd.concat([existing_data, new_row], ignore_index=True)
-        conn.update(spreadsheet=url, data=updated_df)
+        
+        # Mise à jour : on passe l'URL à la fonction update
+        conn.update(spreadsheet=url_fiche, data=updated_df)
         
         st.success("✅ Données envoyées avec succès au QG !")
         st.balloons()
     except Exception as e:
+        st.error(f"Erreur lors de l'envoi : {e}")
+        st.success("✅ Données envoyées avec succès au QG !")
+        st.balloons()
+    except Exception as e:
         st.error(f"Détail de l'erreur : {e}")
+
 
 
 
