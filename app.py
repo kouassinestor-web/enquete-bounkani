@@ -9,8 +9,7 @@ st.title("📊 Évaluation des Besoins : Région du Bounkani")
 st.info("Les données saisies sont transmises directement au QG via Google Sheets.")
 
 # --- CONNEXION GOOGLE SHEETS ---
-# Note : Vous devrez configurer l'URL dans vos secrets Streamlit plus tard
-# --- CONNEXION GOOGLE SHEETS ---
+# On indique l'URL directement ici pour éviter l'erreur "must be specified"
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 with st.form("enquete_form"):
@@ -90,3 +89,4 @@ if submit:
         st.balloons()
     except Exception as e:
         st.error(f"Détail de l'erreur : {e}")
+
