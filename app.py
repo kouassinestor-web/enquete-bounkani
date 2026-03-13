@@ -65,12 +65,9 @@ with st.form("enquete_form"):
 
 if submit:
     try:
-        # On définit l'URL ici, c'est plus sûr
         url_fiche = "https://docs.google.com/spreadsheets/d/1ia4XmRHSpwWabBNsGis8zyiBX2QvcVrka9Y-yCuIXiw/edit"
         
-        # Lecture : on passe l'URL à la fonction read
-        existing_data = conn.read(spreadsheet=url_fiche)
-        
+        # 1. Création directe de la nouvelle ligne
         new_row = pd.DataFrame([{
             "Date": str(date_coll),
             "Enqueteur": enqueteur,
@@ -84,19 +81,16 @@ if submit:
             "Scolarisation": scolarisation
         }])
         
-        updated_df = pd.concat([existing_data, new_row], ignore_index=True)
-        
-        # Mise à jour : on passe l'URL à la fonction update
-        conn.update(spreadsheet=url_fiche, data=updated_df)
+        # 2. Ajout direct au tableur (sans lire l'ancien d'abord, c'est plus rapide et évite l'erreur 401)
+        conn.create(spreadsheet=url_fiche, data=new_row)
         
         st.success("✅ Données envoyées avec succès au QG !")
         st.balloons()
+        
     except Exception as e:
-        st.error(f"Erreur lors de l'envoi : {e}")
-        st.success("✅ Données envoyées avec succès au QG !")
-        st.balloons()
-    except Exception as e:
-        st.error(f"Détail de l'erreur : {e}")
+        # On n'affiche l'erreur que si le succès n'est pas là
+        st.error(f"Note technique : {e}")
+
 
 
 
