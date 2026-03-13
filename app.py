@@ -65,34 +65,39 @@ with st.form("enquete_form"):
 
 if submit:
     try:
-        # On définit l'URL ici, c'est plus sûr
-        url_fiche = "https://docs.google.com/spreadsheets/d/1ia4XmRHSpwWabBNsGis8zyiBX2QvcVrka9Y-yCuIXiw/edit"
-        
-        # Lecture : on passe l'URL à la fonction read
-        existing_data = conn.read(spreadsheet=url_fiche)
-        
-        new_row = pd.DataFrame([{
+        # Création de la ligne avec les données
+        new_data = {
             "Date": str(date_coll),
             "Enqueteur": enqueteur,
-            "Localite": sp_commune,
             "Chef_Menage": nom_chef,
             "Sexe": sexe_chef,
             "Nationalite": nationalite,
             "WASH_Traitement": traitement_eau,
-            "Alim_Repas_Adultes": repas_adultes,
+            "Alim_Repas_Adult": repas_adultes,
             "Abris_Mur": structure_mur,
             "Scolarisation": scolarisation
-        }])
-        
-        updated_df = pd.concat([existing_data, new_row], ignore_index=True)
-        
-        # Mise à jour : on passe l'URL à la fonction update
-        conn.update(spreadsheet=url_fiche, data=updated_df)
-        
-        st.success("✅ Données envoyées avec succès au QG !")
+        }
+        df = pd.DataFrame([new_data])
+
+        # Sauvegarde dans un fichier CSV sur le serveur
+        # 'a' veut dire 'append' (ajouter à la fin), 'header=False' pour ne pas répéter les titres
+        file_path = "donnees_enquete_bounkani.csv"
+        df.to_csv(file_path, mode='a', index=False, header=not st.io.path.exists(file_path))
+
+        st.success("✅ Enregistré localement ! N'oubliez pas de télécharger le fichier en fin de journée.")
         st.balloons()
+        
+        # Bouton pour que VOUS puissiez télécharger les données collectées
+        with open(file_path, "rb") as file:
+            st.download_button(
+                label="📥 Télécharger le fichier des résultats (CSV)",
+                data=file,
+                file_name="resultats_bounkani.csv",
+                mime="text/csv"
+            )
     except Exception as e:
-        st.error(f"Erreur lors de l'envoi : {e}")
+        st.error(f"Erreur : {e}")
+
 
 
 
