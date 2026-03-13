@@ -65,8 +65,14 @@ with st.form("enquete_form"):
 
 if submit:
     try:
-        # 1. Création de la nouvelle ligne avec les bons noms de colonnes
-        new_row = {
+        # L'URL de votre fichier
+        url = "https://docs.google.com/spreadsheets/d/1ia4XmRHSpwWabBNsGis8zyiBX2QvcVrka9Y-yCuIXiw/edit"
+        
+        # 1. Lecture (on précise l'URL ici)
+        existing_data = conn.read(spreadsheet=url)
+        
+        # 2. Création de la nouvelle ligne
+        new_row = pd.DataFrame([{
             "Date": str(date_coll),
             "Enqueteur": enqueteur,
             "Localite": sp_commune,
@@ -77,18 +83,17 @@ if submit:
             "Alim_Repas_Adultes": repas_adultes,
             "Abris_Mur": structure_mur,
             "Scolarisation": scolarisation
-        }
+        }])
         
-        # 2. Lecture et mise à jour simplifiée
-        existing_data = conn.read() # Il va lire l'URL directement dans vos secrets
-        updated_df = pd.concat([existing_data, pd.DataFrame([new_row])], ignore_index=True)
-        
-        conn.update(data=updated_df) # Il va écrire via vos secrets
+        # 3. Fusion et Mise à jour (on précise l'URL ici aussi)
+        updated_df = pd.concat([existing_data, new_row], ignore_index=True)
+        conn.update(spreadsheet=url, data=updated_df)
         
         st.success("✅ Données envoyées avec succès au QG !")
         st.balloons()
     except Exception as e:
         st.error(f"Détail de l'erreur : {e}")
+
 
 
 
