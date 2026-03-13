@@ -10,7 +10,7 @@ st.info("Les données saisies sont transmises directement au QG via Google Sheet
 
 # --- CONNEXION GOOGLE SHEETS ---
 # On indique l'URL directement ici pour éviter l'erreur "must be specified"
-conn = st.connection("gsheets", type=GSheetsConnection, spreadsheet="https://docs.google.com/spreadsheets/d/1ia4XmRHSpwWabBNsGis8zyiBX2QvcVrka9Y-yCuIXiw/edit")
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 with st.form("enquete_form"):
     # SECTION 1: ADMINISTRATION
@@ -89,5 +89,6 @@ if submit:
         st.balloons()
     except Exception as e:
         st.error(f"Détail de l'erreur : {e}")
+
 
 
