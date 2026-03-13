@@ -1,18 +1,14 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
-from streamlit_gsheets import GSheetsConnection
+import os
 
 st.set_page_config(page_title="Vunérabilité Bounkani", layout="wide")
 
 st.title("📊 Évaluation des Besoins : Région du Bounkani")
-st.info("Les données saisies sont transmises directement au QG via Google Sheets.")
+st.info("Formulaire de collecte terrain (Mode Local Sécurisé)")
 
-# --- CONNEXION GOOGLE SHEETS ---
-# On indique l'URL directement ici pour éviter l'erreur "must be specified"
-conn = st.connection("gsheets", type=GSheetsConnection)
-
-with st.form("enquete_form"):
+with st.form("enquete_form", clear_on_submit=True):
     # SECTION 1: ADMINISTRATION
     st.header("1. Administration & Collecte")
     col1, col2 = st.columns(2)
@@ -33,7 +29,7 @@ with st.form("enquete_form"):
     with c3:
         sp_commune = st.text_input("Sous-Préfecture / Commune / Village")
 
-    # SECTION 3: IDENTIFICATION DE L'ENQUÊTÉ (Source PDF)
+    # SECTION 3: IDENTIFICATION
     st.header("3. Identification de l'enquêté")
     col_id1, col_id2, col_id3 = st.columns(3)
     with col_id1:
@@ -48,8 +44,8 @@ with st.form("enquete_form"):
 
     st.divider()
 
-    # SECTION 4-5-6 : WASH, ALIM, ABRIS (Source Excel)
-    st.header("4. Secteurs WASH, Alimentation & Abris")
+    # SECTION 4-5-6 : WASH & ALIM
+    st.header("4. Secteurs WASH & Alimentation")
     w1, w2, w3 = st.columns(3)
     with w1:
         traitement_eau = st.selectbox("Traitement de l'eau", ["Rien", "Ébullition", "Chlore", "Filtre"])
@@ -60,47 +56,51 @@ with st.form("enquete_form"):
     
     scolarisation = st.selectbox("Scolarisation des enfants", ["Tous", "Certains", "Aucun"])
 
-    # Validation
-    submit = st.form_submit_button("ENREGISTRER ET ENVOYER AU QG")
+    submit = st.form_submit_button("ENREGISTRER LA FICHE")
+
+# --- TRAITEMENT DES DONNÉES ---
+file_path = "donnees_bounkani.csv"
 
 if submit:
-    try:
-        # Création de la ligne avec les données
-        new_data = {
-            "Date": str(date_coll),
-            "Enqueteur": enqueteur,
-            "Chef_Menage": nom_chef,
-            "Sexe": sexe_chef,
-            "Nationalite": nationalite,
-            "WASH_Traitement": traitement_eau,
-            "Alim_Repas_Adult": repas_adultes,
-            "Abris_Mur": structure_mur,
-            "Scolarisation": scolarisation
-        }
-        df = pd.DataFrame([new_data])
+    # Création du dictionnaire de données
+    data = {
+        "Date": [str(date_coll)],
+        "Chef_Equipe": [chef_equipe],
+        "Enqueteur": [enqueteur],
+        "Departement": [departement],
+        "Localite": [sp_commune],
+        "Chef_Menage": [nom_chef],
+        "Sexe": [sexe_chef],
+        "Nationalite": [nationalite],
+        "WASH_Traitement": [traitement_eau],
+        "Alim_Repas_Adult": [repas_adultes],
+        "Abris_Mur": [structure_mur],
+        "Scolarisation": [scolarisation]
+    }
+    df_new = pd.DataFrame(data)
 
-        # Sauvegarde dans un fichier CSV sur le serveur
-        # 'a' veut dire 'append' (ajouter à la fin), 'header=False' pour ne pas répéter les titres
-        file_path = "donnees_enquete_bounkani.csv"
-        df.to_csv(file_path, mode='a', index=False, header=not st.io.path.exists(file_path))
+    # Sauvegarde CSV (Mode Ajout)
+    if not os.path.isfile(file_path):
+        df_new.to_csv(file_path, index=False, encoding='utf-8')
+    else:
+        df_new.to_csv(file_path, mode='a', index=False, header=False, encoding='utf-8')
 
-        st.success("✅ Enregistré localement ! N'oubliez pas de télécharger le fichier en fin de journée.")
-        st.balloons()
-        
-        # Bouton pour que VOUS puissiez télécharger les données collectées
-        with open(file_path, "rb") as file:
-            st.download_button(
-                label="📥 Télécharger le fichier des résultats (CSV)",
-                data=file,
-                file_name="resultats_bounkani.csv",
-                mime="text/csv"
-            )
-    except Exception as e:
-        st.error(f"Erreur : {e}")
+    st.success(f"✅ Fiche de {nom_chef} enregistrée avec succès sur le serveur !")
+    st.balloons()
 
-
-
-
-
-
-
+# --- ESPACE ADMINISTRATEUR (Pour vous) ---
+st.sidebar.divider()
+st.sidebar.header("Zone Administrateur")
+if os.path.isfile(file_path):
+    df_collecte = pd.read_csv(file_path)
+    st.sidebar.write(f"Nombre de fiches collectées : **{len(df_collecte)}**")
+    
+    with open(file_path, "rb") as f:
+        st.sidebar.download_button(
+            label="📥 Télécharger la base de données (CSV)",
+            data=f,
+            file_name=f"collecte_bounkani_{date.today()}.csv",
+            mime="text/csv"
+        )
+else:
+    st.sidebar.info("Aucune donnée collectée pour le moment.")
